@@ -17,15 +17,11 @@ package controllers
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	Log "log"
-
 	"github.com/go-logr/logr"
 	"github.com/open-telemetry/opentelemetry-operator/apis/v1alpha1"
 	//agent2 "github.com/open-telemetry/opentelemetry-operator/experimental/internal/examples/agent/agent"
 	"github.com/open-telemetry/opentelemetry-operator/internal/config"
-	"github.com/open-telemetry/opentelemetry-operator/internal/experimental/examples/agent/agent"
 	"github.com/open-telemetry/opentelemetry-operator/pkg/collector/reconcile"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -132,7 +128,6 @@ func NewReconciler(p Params) *OpenTelemetryCollectorReconciler {
 func (r *OpenTelemetryCollectorReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.log.WithValues("opentelemetrycollector", req.NamespacedName)
-
 	var instance v1alpha1.OpenTelemetryCollector
 	if err := r.Get(ctx, req.NamespacedName, &instance); err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -157,15 +152,8 @@ func (r *OpenTelemetryCollectorReconciler) Reconcile(_ context.Context, req ctrl
 	if err := r.RunTasks(ctx, params); err != nil {
 		return ctrl.Result{}, err
 	}
-	fmt.Printf("\n After Run tAsk: \n")
-	var agentType string
-	flag.StringVar(&agentType, "t", "io.opentelemetry.collector", "Agent Type String")
 
-	var agentVersion string
-	flag.StringVar(&agentVersion, "v", "1.0.0", "Agent Version String")
-	go agent.NewAgent(&agent.Logger{Log.Default()}, agentType, agentVersion)
-
-	fmt.Printf("\nLast line of the reconcile aftter run task: %T", params)
+	fmt.Printf("\nLast line of the reconcile after run task: %T", params)
 	return ctrl.Result{}, nil
 }
 

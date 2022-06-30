@@ -18,11 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os"
-	"runtime"
-	"strings"
-	"time"
-
+	"github.com/open-telemetry/opentelemetry-operator/internal/experimental/examples/agent/agent"
 	"github.com/spf13/pflag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
@@ -30,12 +26,17 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/record"
+	"log"
+	"os"
+	"runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"strings"
+	"time"
 
 	otelv1alpha1 "github.com/open-telemetry/opentelemetry-operator/apis/v1alpha1"
 	"github.com/open-telemetry/opentelemetry-operator/controllers"
@@ -238,8 +239,26 @@ func main() {
 
 	setupLog.Info("starting manager")
 	fmt.Println("Starting up the manager --------------------------------")
+	//fmt.Printf("\n After Run tAsk: \n")
+	//var agentType string
+	//flag.StringVar(&agentType, "t", "io.opentelemetry.collector", "Agent Type String")
+	//
+	//var agentVersion string
+	//flag.StringVar(&agentVersion, "v", "1.0.0", "Agent Version String")
+	//flag.Parse()
+	//quit := make(chan bool)
+	var ag *agent.Agent
+	go func() {
+		<-mgr.Elected()
+		fmt.Println("=-=-=-=-==-=-=-=- Before AG After MGR ELECTED")
+		ag = agent.NewAgent(&agent.Logger{log.Default()}, "io.opentelemetry.collector", "1.0.0")
+		fmt.Println("Insinde go routine AFTER AG: ", ag)
+	}()
+	// go routine -> function -> continous check -> leader assigneD? -> true? - proceed further
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
+		ag.Shutdown()
+		// check here close signal agent
 		os.Exit(1)
 	} else {
 		fmt.Println("trying to get into non blocking call ******************* ")

@@ -55,7 +55,7 @@ type Agent struct {
 
 	remoteConfigStatus *protobufs.RemoteConfigStatus
 
-	metricReporter *MetricReporter
+	//metricReporter *MetricReporter
 }
 
 func NewAgent(logger types.Logger, agentType string, agentVersion string) *Agent {
@@ -83,7 +83,7 @@ func (agent *Agent) start() error {
 	agent.opampClient = client.NewWebSocket(agent.logger)
 
 	settings := types.StartSettings{
-		OpAMPServerURL: "ws://127.0.0.1:4320/v1/opamp",
+		OpAMPServerURL: "ws://host.minikube.internal:4320/v1/opamp",
 		InstanceUid:    agent.instanceId.String(),
 		Callbacks: types.CallbacksStruct{
 			OnConnectFunc: func() {
@@ -172,10 +172,10 @@ func (agent *Agent) updateAgentIdentity(instanceId ulid.ULID) {
 		instanceId.String())
 	agent.instanceId = instanceId
 
-	if agent.metricReporter != nil {
-		// TODO: reinit or update meter (possibly using a single function to update all own connection settings
-		// or with having a common resource factory or so)
-	}
+	//if agent.metricReporter != nil {
+	//	// TODO: reinit or update meter (possibly using a single function to update all own connection settings
+	//	// or with having a common resource factory or so)
+	//}
 }
 
 func (agent *Agent) loadLocalConfig() {
@@ -203,23 +203,23 @@ func (agent *Agent) composeEffectiveConfig() *protobufs.EffectiveConfig {
 	}
 }
 
-func (agent *Agent) initMeter(settings *protobufs.TelemetryConnectionSettings) {
-	reporter, err := NewMetricReporter(agent.logger, settings, agent.agentType, agent.agentVersion, agent.instanceId)
-	if err != nil {
-		agent.logger.Errorf("Cannot collect metrics: %v", err)
-		return
-	}
-
-	prevReporter := agent.metricReporter
-
-	agent.metricReporter = reporter
-
-	if prevReporter != nil {
-		prevReporter.Shutdown()
-	}
-
-	return
-}
+//func (agent *Agent) initMeter(settings *protobufs.TelemetryConnectionSettings) {
+//	reporter, err := NewMetricReporter(agent.logger, settings, agent.agentType, agent.agentVersion, agent.instanceId)
+//	if err != nil {
+//		agent.logger.Errorf("Cannot collect metrics: %v", err)
+//		return
+//	}
+//
+//	prevReporter := agent.metricReporter
+//
+//	agent.metricReporter = reporter
+//
+//	if prevReporter != nil {
+//		prevReporter.Shutdown()
+//	}
+//
+//	return
+//}
 
 type agentConfigFileItem struct {
 	name string
@@ -338,7 +338,7 @@ func (agent *Agent) onMessage(ctx context.Context, msg *types.MessageData) {
 	}
 
 	if msg.OwnMetricsConnSettings != nil {
-		agent.initMeter(msg.OwnMetricsConnSettings)
+		//agent.initMeter(msg.OwnMetricsConnSettings)
 	}
 
 	if msg.AgentIdentification != nil {
