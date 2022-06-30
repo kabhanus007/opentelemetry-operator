@@ -17,9 +17,16 @@ package controllers
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	Log "log"
 
 	"github.com/go-logr/logr"
+	"github.com/open-telemetry/opentelemetry-operator/apis/v1alpha1"
+	//agent2 "github.com/open-telemetry/opentelemetry-operator/experimental/internal/examples/agent/agent"
+	"github.com/open-telemetry/opentelemetry-operator/internal/config"
+	"github.com/open-telemetry/opentelemetry-operator/internal/experimental/examples/agent/agent"
+	"github.com/open-telemetry/opentelemetry-operator/pkg/collector/reconcile"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,10 +35,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/open-telemetry/opentelemetry-operator/apis/v1alpha1"
-	"github.com/open-telemetry/opentelemetry-operator/internal/config"
-	"github.com/open-telemetry/opentelemetry-operator/pkg/collector/reconcile"
 )
 
 // OpenTelemetryCollectorReconciler reconciles a OpenTelemetryCollector object.
@@ -63,6 +66,7 @@ type Params struct {
 
 // NewReconciler creates a new reconciler for OpenTelemetryCollector objects.
 func NewReconciler(p Params) *OpenTelemetryCollectorReconciler {
+	fmt.Printf("\n New Reconciler is running: %T", p)
 	if len(p.Tasks) == 0 {
 		p.Tasks = []Task{
 			{
@@ -134,7 +138,7 @@ func (r *OpenTelemetryCollectorReconciler) Reconcile(_ context.Context, req ctrl
 		if !apierrors.IsNotFound(err) {
 			log.Error(err, "unable to fetch OpenTelemetryCollector")
 		}
-
+		fmt.Printf("\n Not able to fetch oTel col: %T", instance)
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
@@ -153,12 +157,21 @@ func (r *OpenTelemetryCollectorReconciler) Reconcile(_ context.Context, req ctrl
 	if err := r.RunTasks(ctx, params); err != nil {
 		return ctrl.Result{}, err
 	}
+	fmt.Printf("\n After Run tAsk: \n")
+	var agentType string
+	flag.StringVar(&agentType, "t", "io.opentelemetry.collector", "Agent Type String")
 
+	var agentVersion string
+	flag.StringVar(&agentVersion, "v", "1.0.0", "Agent Version String")
+	go agent.NewAgent(&agent.Logger{Log.Default()}, agentType, agentVersion)
+
+	fmt.Printf("\nLast line of the reconcile aftter run task: %T", params)
 	return ctrl.Result{}, nil
 }
 
 // RunTasks runs all the tasks associated with this reconciler.
 func (r *OpenTelemetryCollectorReconciler) RunTasks(ctx context.Context, params reconcile.Params) error {
+	fmt.Printf("\nInside run task stmt 1: %T", r.tasks)
 	for _, task := range r.tasks {
 		if err := task.Do(ctx, params); err != nil {
 			r.log.Error(err, fmt.Sprintf("failed to reconcile %s", task.Name))
@@ -166,13 +179,15 @@ func (r *OpenTelemetryCollectorReconciler) RunTasks(ctx context.Context, params 
 				return err
 			}
 		}
+		fmt.Printf("\nInside run task inside For loop: %T", task)
 	}
-
+	fmt.Printf("\nInside run task stmt last after loop: %T", r.tasks)
 	return nil
 }
 
 // SetupWithManager tells the manager what our controller is interested in.
 func (r *OpenTelemetryCollectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	fmt.Printf("\nInside Setup with Mgr: %T \n MGR: %T", r, mgr)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OpenTelemetryCollector{}).
 		Owns(&corev1.ConfigMap{}).

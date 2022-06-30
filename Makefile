@@ -327,3 +327,12 @@ api-docs: crdoc kustomize
 	$(KUSTOMIZE) build config/crd -o $$TMP_DIR/crd-output.yaml ;\
 	$(CRDOC) --resources $$TMP_DIR/crd-output.yaml --output docs/api.md ;\
 	}
+
+.PHONY: build-example-agent
+build-example-agent:
+	go build -o experimental/internal/examples/agent/bin/agent experimental/internal/examples/agent/main.go
+.PHONY: run-example-agent
+run-example-agent:
+	cd experimental/internal/examples/agent && ./bin/agent
+#.PHONY: agent-install
+#agent-install:

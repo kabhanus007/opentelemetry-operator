@@ -225,12 +225,26 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+	// Code for Agent
+	//var agentType string
+	//flag.StringVar(&agentType, "t", "io.opentelemetry.collector", "Agent Type String")
+	//
+	//var agentVersion string
+	//flag.StringVar(&agentVersion, "v", "1.0.0", "Agent Version String")
+	//
+	//flag.Parse()
+
+	// Code for Agent
 
 	setupLog.Info("starting manager")
+	fmt.Println("Starting up the manager --------------------------------")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
+	} else {
+		fmt.Println("trying to get into non blocking call ******************* ")
 	}
+	fmt.Println("MAIN LAST LINE --------------------------------")
 }
 
 func addDependencies(_ context.Context, mgr ctrl.Manager, cfg config.Config, v version.Version) error {
